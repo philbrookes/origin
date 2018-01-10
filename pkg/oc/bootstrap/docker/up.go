@@ -210,6 +210,7 @@ type CommonStartConfig struct {
 	ShouldInstallMetrics        bool
 	ShouldInstallLogging        bool
 	ShouldInstallServiceCatalog bool
+	ShouldInstallMobileCore     bool
 	PortForwarding              bool
 
 	Out   io.Writer
@@ -260,29 +261,30 @@ func (c *CommonStartConfig) addTask(t task) {
 	c.Tasks = append(c.Tasks, t)
 }
 
-func (config *CommonStartConfig) Bind(flags *pflag.FlagSet) {
-	flags.BoolVar(&config.ShouldCreateDockerMachine, "create-machine", false, "Create a Docker machine if one doesn't exist")
-	flags.StringVar(&config.DockerMachine, "docker-machine", "", "Specify the Docker machine to use")
-	flags.StringVar(&config.ImageVersion, "version", "", "Specify the tag for OpenShift images")
-	flags.StringVar(&config.Image, "image", variable.DefaultImagePrefix, "Specify the images to use for OpenShift")
-	flags.StringVar(&config.ImageStreams, "image-streams", defaultImageStreams, "Specify which image streams to use, centos7|rhel7")
-	flags.BoolVar(&config.SkipRegistryCheck, "skip-registry-check", false, "Skip Docker daemon registry check")
-	flags.StringVar(&config.PublicHostname, "public-hostname", "", "Public hostname for OpenShift cluster")
-	flags.StringVar(&config.RoutingSuffix, "routing-suffix", "", "Default suffix for server routes")
-	flags.BoolVar(&config.UseExistingConfig, "use-existing-config", false, "Use existing configuration if present")
-	flags.StringVar(&config.HostConfigDir, "host-config-dir", host.DefaultConfigDir, "Directory on Docker host for OpenShift configuration")
-	flags.StringVar(&config.HostVolumesDir, "host-volumes-dir", host.DefaultVolumesDir, "Directory on Docker host for OpenShift volumes")
-	flags.StringVar(&config.HostDataDir, "host-data-dir", "", "Directory on Docker host for OpenShift data. If not specified, etcd data will not be persisted on the host.")
-	flags.StringVar(&config.HostPersistentVolumesDir, "host-pv-dir", host.DefaultPersistentVolumesDir, "Directory on host for OpenShift persistent volumes")
-	flags.BoolVar(&config.PortForwarding, "forward-ports", config.PortForwarding, "Use Docker port-forwarding to communicate with origin container. Requires 'socat' locally.")
-	flags.IntVar(&config.ServerLogLevel, "server-loglevel", 0, "Log level for OpenShift server")
-	flags.StringArrayVarP(&config.Environment, "env", "e", config.Environment, "Specify a key-value pair for an environment variable to set on OpenShift container")
-	flags.BoolVar(&config.ShouldInstallMetrics, "metrics", false, "Install metrics (experimental)")
-	flags.BoolVar(&config.ShouldInstallLogging, "logging", false, "Install logging (experimental)")
-	flags.BoolVar(&config.ShouldInstallServiceCatalog, "service-catalog", false, "Install service catalog (experimental).")
-	flags.StringVar(&config.HTTPProxy, "http-proxy", "", "HTTP proxy to use for master and builds")
-	flags.StringVar(&config.HTTPSProxy, "https-proxy", "", "HTTPS proxy to use for master and builds")
-	flags.StringArrayVar(&config.NoProxy, "no-proxy", config.NoProxy, "List of hosts or subnets for which a proxy should not be used")
+func (c *CommonStartConfig) Bind(flags *pflag.FlagSet) {
+	flags.BoolVar(&c.ShouldCreateDockerMachine, "create-machine", false, "Create a Docker machine if one doesn't exist")
+	flags.StringVar(&c.DockerMachine, "docker-machine", "", "Specify the Docker machine to use")
+	flags.StringVar(&c.ImageVersion, "version", "", "Specify the tag for OpenShift images")
+	flags.StringVar(&c.Image, "image", variable.DefaultImagePrefix, "Specify the images to use for OpenShift")
+	flags.StringVar(&c.ImageStreams, "image-streams", defaultImageStreams, "Specify which image streams to use, centos7|rhel7")
+	flags.BoolVar(&c.SkipRegistryCheck, "skip-registry-check", false, "Skip Docker daemon registry check")
+	flags.StringVar(&c.PublicHostname, "public-hostname", "", "Public hostname for OpenShift cluster")
+	flags.StringVar(&c.RoutingSuffix, "routing-suffix", "", "Default suffix for server routes")
+	flags.BoolVar(&c.UseExistingConfig, "use-existing-config", false, "Use existing configuration if present")
+	flags.StringVar(&c.HostConfigDir, "host-config-dir", host.DefaultConfigDir, "Directory on Docker host for OpenShift configuration")
+	flags.StringVar(&c.HostVolumesDir, "host-volumes-dir", host.DefaultVolumesDir, "Directory on Docker host for OpenShift volumes")
+	flags.StringVar(&c.HostDataDir, "host-data-dir", "", "Directory on Docker host for OpenShift data. If not specified, etcd data will not be persisted on the host.")
+	flags.StringVar(&c.HostPersistentVolumesDir, "host-pv-dir", host.DefaultPersistentVolumesDir, "Directory on host for OpenShift persistent volumes")
+	flags.BoolVar(&c.PortForwarding, "forward-ports", c.PortForwarding, "Use Docker port-forwarding to communicate with origin container. Requires 'socat' locally.")
+	flags.IntVar(&c.ServerLogLevel, "server-loglevel", 0, "Log level for OpenShift server")
+	flags.StringArrayVarP(&c.Environment, "env", "e", c.Environment, "Specify a key-value pair for an environment variable to set on OpenShift container")
+	flags.BoolVar(&c.ShouldInstallMetrics, "metrics", false, "Install metrics (experimental)")
+	flags.BoolVar(&c.ShouldInstallLogging, "logging", false, "Install logging (experimental)")
+	flags.BoolVar(&c.ShouldInstallServiceCatalog, "service-catalog", false, "Install service catalog (experimental).")
+	flags.BoolVar(&c.ShouldInstallMobileCore, "mobile", false, "Install mobile core (experimental).")
+	flags.StringVar(&c.HTTPProxy, "http-proxy", "", "HTTP proxy to use for master and builds")
+	flags.StringVar(&c.HTTPSProxy, "https-proxy", "", "HTTPS proxy to use for master and builds")
+	flags.StringArrayVar(&c.NoProxy, "no-proxy", c.NoProxy, "List of hosts or subnets for which a proxy should not be used")
 }
 
 // Validate validates that required fields in StartConfig have been populated
@@ -317,8 +319,8 @@ type ClientStartConfig struct {
 	CommonStartConfig
 }
 
-func (config *ClientStartConfig) Bind(flags *pflag.FlagSet) {
-	config.CommonStartConfig.Bind(flags)
+func (c *ClientStartConfig) Bind(flags *pflag.FlagSet) {
+	c.CommonStartConfig.Bind(flags)
 }
 
 func (c *CommonStartConfig) Complete(f *osclientcmd.Factory, cmd *cobra.Command) error {
@@ -395,6 +397,11 @@ func (c *ClientStartConfig) Complete(f *osclientcmd.Factory, cmd *cobra.Command)
 		return err
 	}
 
+	// If the mobile core is to be installed, the service catalog is also required
+	c.addTask(conditionalTask("Checking mobile core requirements", c.EnsureMobileCoreRequirements, func() bool {
+		return c.ShouldInstallMobileCore
+	}))
+
 	// Check if the openshift server version is sufficient to run the service catalog.
 	// Do this first so we can fail quickly if it's not.
 	c.addTask(conditionalTask("Checking service catalog version requirements", c.CheckServiceCatalogPrereqVersion, func() bool {
@@ -451,6 +458,11 @@ func (c *ClientStartConfig) Complete(f *osclientcmd.Factory, cmd *cobra.Command)
 	// the TSB registration is not persisted.
 	c.addTask(conditionalTask("Registering template service broker with service catalog", c.RegisterTemplateServiceBroker, func() bool {
 		return c.ShouldInstallServiceCatalog
+	}))
+
+	// Install Mobile Core
+	c.addTask(conditionalTask("Installing the mobile core", c.InstallMobileCore, func() bool {
+		return c.ShouldInstallMobileCore
 	}))
 
 	// Login with an initial default user
@@ -875,6 +887,7 @@ func (c *ClientStartConfig) StartOpenShift(out io.Writer) error {
 		NoProxy:                  c.NoProxy,
 		DockerRoot:               dockerRoot,
 		ServiceCatalog:           c.ShouldInstallServiceCatalog,
+		MobileCore:               c.ShouldInstallMobileCore,
 	}
 	if c.ShouldInstallMetrics {
 		opt.MetricsHost = openshift.MetricsHost(c.RoutingSuffix, c.ServerIP)
@@ -1106,6 +1119,13 @@ func (c *ClientStartConfig) CheckServiceCatalogPrereqVersion(out io.Writer) erro
 	return nil
 }
 
+//EnsureMobileCoreRequirements will ensure service catalog installation is performed.
+func (c *ClientStartConfig) EnsureMobileCoreRequirements(out io.Writer) error {
+	c.ShouldInstallServiceCatalog = true
+
+	return nil
+}
+
 // InstallServiceCatalog will start the installation of service catalog components
 func (c *ClientStartConfig) InstallServiceCatalog(out io.Writer) error {
 	f, err := c.Factory()
@@ -1148,6 +1168,12 @@ func (c *ClientStartConfig) RegisterTemplateServiceBroker(out io.Writer) error {
 		return err
 	}
 	return c.OpenShiftHelper().RegisterTemplateServiceBroker(f, c.LocalConfigDir)
+}
+
+// InstallMobileCore
+func (c *ClientStartConfig) InstallMobileCore(out io.Writer) error {
+	fmt.Fprintf(c.Out, "Installing Mobile Core.")
+	return nil
 }
 
 // Login logs into the new server and sets up a default user and project

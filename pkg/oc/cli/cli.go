@@ -45,7 +45,7 @@ var (
 	cliLong = ktemplates.LongDesc(`
     ` + productName + ` Client
 
-    This client helps you develop, build, deploy, and run your applications on any
+     This client helps you develop, build, deploy, and run your applications on any
     OpenShift or Kubernetes compatible platform. It also includes the administrative
     commands for managing a cluster under the 'adm' subcommand.`)
 

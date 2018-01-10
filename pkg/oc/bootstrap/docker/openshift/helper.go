@@ -133,6 +133,7 @@ type StartOptions struct {
 	KubeconfigContents       string
 	DockerRoot               string
 	ServiceCatalog           bool
+	MobileCore               bool
 }
 
 // NewHelper creates a new OpenShift helper
